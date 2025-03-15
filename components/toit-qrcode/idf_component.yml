@@ -1,4 +1,5 @@
 dependencies:
   espressif/qrcode: "^0.1.0~2"
+  espressif/arduino-esp32: "^3.0.2"
   idf:
     version: ">=4.1.0"

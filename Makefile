@@ -8,7 +8,7 @@ SHELL := bash
 
 # Change to your configuration. See toit/toolchains for the available targets.
 # Then run 'make init'.
-IDF_TARGET := esp32
+IDF_TARGET := esp32c6
 
 # Set to false to avoid initializing submodules at every build.
 INITIALIZE_SUBMODULES := true
