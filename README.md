@@ -1,4 +1,5 @@
-# Demo of a custom envelope with a C service
+# Template repository for deploying Edge Impulse C++ Models on Toit-enabled devices
+
 
 This repository contains a simple example of a Toit envelope with a C service.
 
