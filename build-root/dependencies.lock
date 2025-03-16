@@ -427,6 +427,6 @@ direct_dependencies:
 - espressif/arduino-esp32
 - espressif/qrcode
 - idf
-manifest_hash: f69de9cebed0cb801353f7498458b69199358d12f9360cef8279b29e4bc16d79
+manifest_hash: 9bc4968a6804db1ea71f25d5cc608df12b9fbdffa57de80a8acf596a61731077
 target: esp32c6
 version: 2.0.0

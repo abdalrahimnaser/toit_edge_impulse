@@ -54,7 +54,7 @@ list(APPEND SOURCE_FILES ${MODEL_FILES})
 # )
 
 
-idf_component_register(SRCS "echo.cpp" "${SOURCE_FILES}"
+idf_component_register(SRCS "toit_envelope.cpp" "fall_detection.cpp" "${SOURCE_FILES}"
                        INCLUDE_DIRS "${include_dirs}"      
                        REQUIRES toit
                        WHOLE_ARCHIVE                

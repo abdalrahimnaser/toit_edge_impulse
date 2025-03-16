@@ -2,14 +2,20 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstdint>
-#include <toit/toit.h>
 #include <Fall_Detection__inferencing.h>
 #include <LSM6DS3.h>
-#include <stdio.h> 
+#include <stdio.h>
+#include "fall_detection.h" // Include the header file
 
-// #ifndef FREERTOS_H
-// printf("Well, FreeRTOS wasn't defined already\n");
-// #endif
+// Function declarations
+float ei_get_sign(float number);
+static bool ei_connect_fusion_list(const char *input_list);
+bool init_IMU(void);
+bool init_ADC(void);
+uint8_t poll_IMU(void);
+uint8_t poll_ADC(void);
+static int8_t ei_find_axis(char *axis_name);
+
 
 typedef struct{
     const char *name;
@@ -23,13 +29,6 @@ typedef struct{
 #define MAX_ACCEPTED_RANGE  2.0f        
 #define N_SENSORS     7
 
-float ei_get_sign(float number);
-static bool ei_connect_fusion_list(const char *input_list);
-bool init_IMU(void);
-bool init_ADC(void);
-uint8_t poll_IMU(void);
-uint8_t poll_ADC(void);
-
 /* Private variables ------------------------------------------------------- */
 static const bool debug_nn = true; // Set this to true to see e.g. features generated from the raw signal
 static float data[N_SENSORS];
@@ -38,7 +37,6 @@ static int fusion_ix = 0;
 
 LSM6DS3 lis(I2C_MODE, 0x6B);    // the address here is 0x6B not 0x6A as was in the example
 uint16_t errorsAndWarnings = 0; // part of the imu driver example code; may not be used; for debugging purposes
-
 
 eiSensors sensors[] =
 {
@@ -51,7 +49,6 @@ eiSensors sensors[] =
 
 void setup()
 {
-
     /* Connect used sensors */
     if(ei_connect_fusion_list(EI_CLASSIFIER_FUSION_AXES_STRING) == false) {
         printf("ERR: Errors in sensor list detected\r\n");
@@ -72,14 +69,8 @@ void setup()
     }
 }
 
-
 float inference()
 {
-    // printf("\nStarting inferencing in 2 seconds...\r\n");  // for some reason printf isn't working
-    //                                                     // that's why this is the only print there
-
-    // vTaskDelay(2);
-
     if (EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME != fusion_ix) {
         printf("ERR: Sensors don't match the sensors required in the model\r\n"
         "Following sensors are required: %s\r\n", EI_CLASSIFIER_FUSION_AXES_STRING);
@@ -102,7 +93,6 @@ float inference()
             }
             if (sensors[fusion_sensors[i]].status == 2) {
                 buffer[ix + i] = *sensors[fusion_sensors[i]].value;
-                // printf("%d %f\n", fusion_sensors[i], buffer[ix + i]);
                 sensors[fusion_sensors[i]].status = 1;
             }
         }
@@ -131,28 +121,12 @@ float inference()
         return -1;
     }
 
-    // // print the predictions
-    // printf("Predictions (DSP: %d ms., Classification: %d ms., Anomaly: %d ms.):\r\n",
-    //     result.timing.dsp, result.timing.classification, result.timing.anomaly);
-    // for (size_t ix = 0; ix < EI_CLASSIFIER_LABEL_COUNT; ix++) {
-    //     printf("%s: %.5f\r\n", result.classification[ix].label, result.classification[ix].value);
-    // }
-
-    // result.classification[0] -> fall; grab the result with .value, so result.classification[0].value
-
-    // printf(" %.5f \n",result.classification[0].value); 
-
-// #if EI_CLASSIFIER_HAS_ANOMALY == 1   // understnad what this means and use it perhaps to enhance model output
-//     printf("    anomaly score: %.3f\r\n", result.anomaly);
-// #endif
     return result.classification[0].value;
-
 }
 
 #if !defined(EI_CLASSIFIER_SENSOR) || (EI_CLASSIFIER_SENSOR != EI_CLASSIFIER_SENSOR_FUSION && EI_CLASSIFIER_SENSOR != EI_CLASSIFIER_SENSOR_ACCELEROMETER)
 #error "Invalid model for current sensor"
 #endif
-
 
 /**
  * @brief Go through sensor list to find matching axis name
@@ -231,8 +205,6 @@ float ei_get_sign(float number) {
 bool init_IMU(void) {
   static bool init_status = false;
   if (!init_status) {
-    // Wire.begin(0,1); 
-    // lis.begin(Wire, LIS3DHTR_ADDRESS_UPDATED);
     init_status = ~lis.begin();
 
     if(init_status == false) {
@@ -241,14 +213,11 @@ bool init_IMU(void) {
     }
 
     ei_sleep(100);
-    // lis.setFullScaleRange(LIS3DHTR_RANGE_2G);
-    // lis.setOutputDataRate(LIS3DHTR_DATARATE_100HZ);
-   
+    
     uint8_t dataToWrite = 0;  //Temporary variable
 
     //Setup the accelerometer******************************
     dataToWrite = 0; //Start Fresh!
-    // dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
     dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_2g;
     dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_104Hz;
 
@@ -271,22 +240,15 @@ bool init_ADC(void) {
 }
 
 uint8_t poll_IMU(void) {
-
     data[0] = lis.readFloatAccelX();
     data[1] = lis.readFloatAccelY();
     data[2] = lis.readFloatAccelZ();
-
-    // lis.getAcceleration(&data[0], &data[1], &data[2]);
 
     for (int i = 0; i < 3; i++) {
         if (fabs(data[i]) > MAX_ACCEPTED_RANGE) {
             data[i] = ei_get_sign(data[i]) * MAX_ACCEPTED_RANGE;
         }
     }
-
-    // data[0] *= CONVERT_G_TO_MS2;
-    // data[1] *= CONVERT_G_TO_MS2;
-    // data[2] *= CONVERT_G_TO_MS2;
 
     return 0;
 }
@@ -296,139 +258,3 @@ uint8_t poll_ADC(void) {
     data[6] = analogRead(A0);
     return 0;
 }
-
-
-// extern "C" void app_main(){
-//     setup();
-//     while(1){
-//         loop();
-//         vTaskDelay(1);
-
-      
-//     }
-// } // note for your learning diary -> including this here results in multiple app_main definrtion error,
-// indicating that the toit funcs below (within the OOP) define this somewhere.
-
-
-
-// A struct to hold the context of the external service.
-typedef struct {
-  toit_msg_context_t* msg_context;
-} echo_service_t;
-
-
-
-
-extern "C" {
-static toit_err_t on_created(void* user_data, toit_msg_context_t* context) {
-  echo_service_t* echo_service = static_cast<echo_service_t*>(user_data);
-  echo_service->msg_context = context;
-  setup();
-  return TOIT_OK;
-}
-
-
-
-
-
-static toit_err_t on_message(void* user_data, int sender, uint8_t* data, int length) {
-  echo_service_t* echo_service = static_cast<echo_service_t*>(user_data);
-  toit_msg_context_t* context = echo_service->msg_context;
-  
-  if (toit_msg_notify(context, sender, data, length, true) != TOIT_OK) {
-    std::printf("unable to send\n");
-  }
-
-  // for(int i = 0; i<4 ;i++){
-  //   temp[i] = (uint8_t)'h';
-  // }
-
-  // if (toit_msg_notify(context, sender, temp, l, false) != TOIT_OK) {
-  //   std::printf("unable to send\n");
-  // }
-
-    // int l = 4;
-    // uint8_t *temp = (uint8_t*)toit_malloc(l * sizeof(uint8_t));
-    // float outcome;
-
-
-    // outcome = inference();
-    // memcpy(temp, &outcome, l);
-
-    // // printf("outcome is %f", outcome);
-    
-    // // for(int i = 0; i < l; i++){
-    // //   printf("current item is: %d", temp[i]);
-    // //   temp[i] = (uint8_t) ((uint32_t)outcome & (0xFF << i*8));  
-    // // }
-  
-    // if (toit_msg_notify(context, 3, temp, l, true) != TOIT_OK) {
-    //   std::printf("unable to send\n");
-    // }
-    
-
-  
-  // free(temp);
-  return TOIT_OK;
-}
-
-
-static toit_err_t on_rpc_request(void* user_data, int sender, int function, toit_msg_request_handle_t handle, uint8_t* data, int length) {
-  // Check if the message is "fetch result"
-  const char* expected_msg = "fetch result";
-  const int expected_length = strlen(expected_msg);
-  
-  // Only proceed with inference if the message matches
-  if (length == expected_length && memcmp(data, expected_msg, expected_length) == 0) {
-    int l = 4;
-    uint8_t *temp = (uint8_t*)toit_malloc(l * sizeof(uint8_t));
-    float outcome;
-
-    outcome = inference();
-    memcpy(temp, &outcome, l);
-
-    if (toit_msg_request_reply(handle, temp, l, true) != TOIT_OK) {
-      std::printf("unable to send\n");
-    }
-  
-  }
-  return TOIT_OK;
-}
-
-static toit_err_t on_removed(void* user_data) {
-  std::free(user_data);
-  return TOIT_OK;
-}
-
-
-
-  
-// if (temp == NULL) {
-//     // Handle memory allocation failure
-// }
-
-// void* u_data;
-// echo_service_t* echo_service_p = static_cast<echo_service_t*>(u_data);
-// echo_service_p->msg_context = nullptr;
-
-
-
-namespace {
-  void __attribute__((constructor)) init() {
-  echo_service_t* echo_service = static_cast<echo_service_t*>(std::malloc(sizeof(echo_service_t)));
-  echo_service->msg_context = nullptr;
-  toit_msg_cbs_t cbs = TOIT_MSG_EMPTY_CBS();
-  cbs.on_created = on_created;
-  cbs.on_message = on_message;
-  cbs.on_rpc_request = on_rpc_request;
-  cbs.on_removed = on_removed;
-  toit_msg_add_handler("toitlang.org/demo-echo", echo_service, cbs);
-
-
-
-
-
-} }
-
-} // extern "C"
-
