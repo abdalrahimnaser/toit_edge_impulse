@@ -11,7 +11,7 @@ SHELL := bash
 IDF_TARGET := esp32c6
 
 # Set to false to avoid initializing submodules at every build.
-INITIALIZE_SUBMODULES := true
+INITIALIZE_SUBMODULES := false
 # A semicolon-separated list of directories that contain components
 #   and external libraries.
 COMPONENTS := $(SOURCE_DIR)/components
