@@ -1,3 +1,5 @@
 [submodule "toit"]
 	path = toit
-	url = https://github.com/toitlang/toit.git
+	url = https://github.com/abdalrahimnaser/toit-modified-EI.git
+	branch = temp_branch_name
+	ignore = untracked
