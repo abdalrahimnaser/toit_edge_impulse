@@ -11,7 +11,7 @@ SHELL := bash
 IDF_TARGET := esp32c6
 
 # Set to false to avoid initializing submodules at every build.
-INITIALIZE_SUBMODULES := false
+INITIALIZE_SUBMODULES := true
 # A semicolon-separated list of directories that contain components
 #   and external libraries.
 COMPONENTS := $(SOURCE_DIR)/components
@@ -67,29 +67,15 @@ clean:
 	@$(call toit-make,clean)
 
 .PHONY: init
-init: initialize-submodules
-	@mkdir -p $(BUILD_ROOT)
-	@if [[ ! -f $(BUILD_ROOT)/sdkconfig.defaults ]]; then \
-		cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/sdkconfig.defaults $(BUILD_ROOT)/sdkconfig.defaults; \
-		echo "Created new sdkconfig.defaults"; \
-	else \
-		echo "Using existing sdkconfig.defaults"; \
-	fi
-	@if [[ ! -f $(BUILD_ROOT)/partitions.csv ]]; then \
-		cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/partitions.csv $(BUILD_ROOT)/partitions.csv; \
-		echo "Created new partitions.csv"; \
-	else \
-		echo "Using existing partitions.csv"; \
-	fi
+init: $(BUILD_ROOT)/sdkconfig.defaults $(BUILD_ROOT)/partitions.csv
+
+$(BUILD_ROOT)/sdkconfig.defaults: initialize-submodules
+	@cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/sdkconfig.defaults $@
+
+$(BUILD_ROOT)/partitions.csv: initialize-submodules
+	@cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/partitions.csv $@
 
 .PHONY: diff
 diff:
 	@diff -U0 --color $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/sdkconfig.defaults $(BUILD_ROOT)/sdkconfig.defaults || true
 	@diff -U0 --color $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/partitions.csv $(BUILD_ROOT)/partitions.csv || true
-
-.PHONY: force-init
-force-init: initialize-submodules
-	@mkdir -p $(BUILD_ROOT)
-	@cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/sdkconfig.defaults $(BUILD_ROOT)/sdkconfig.defaults
-	@cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/partitions.csv $(BUILD_ROOT)/partitions.csv
-	@echo "Forcibly updated configuration files"
