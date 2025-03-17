@@ -67,15 +67,29 @@ clean:
 	@$(call toit-make,clean)
 
 .PHONY: init
-init: $(BUILD_ROOT)/sdkconfig.defaults $(BUILD_ROOT)/partitions.csv
-
-$(BUILD_ROOT)/sdkconfig.defaults: initialize-submodules
-	@cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/sdkconfig.defaults $@
-
-$(BUILD_ROOT)/partitions.csv: initialize-submodules
-	@cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/partitions.csv $@
+init: initialize-submodules
+	@mkdir -p $(BUILD_ROOT)
+	@if [[ ! -f $(BUILD_ROOT)/sdkconfig.defaults ]]; then \
+		cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/sdkconfig.defaults $(BUILD_ROOT)/sdkconfig.defaults; \
+		echo "Created new sdkconfig.defaults"; \
+	else \
+		echo "Using existing sdkconfig.defaults"; \
+	fi
+	@if [[ ! -f $(BUILD_ROOT)/partitions.csv ]]; then \
+		cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/partitions.csv $(BUILD_ROOT)/partitions.csv; \
+		echo "Created new partitions.csv"; \
+	else \
+		echo "Using existing partitions.csv"; \
+	fi
 
 .PHONY: diff
 diff:
 	@diff -U0 --color $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/sdkconfig.defaults $(BUILD_ROOT)/sdkconfig.defaults || true
 	@diff -U0 --color $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/partitions.csv $(BUILD_ROOT)/partitions.csv || true
+
+.PHONY: force-init
+force-init: initialize-submodules
+	@mkdir -p $(BUILD_ROOT)
+	@cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/sdkconfig.defaults $(BUILD_ROOT)/sdkconfig.defaults
+	@cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/partitions.csv $(BUILD_ROOT)/partitions.csv
+	@echo "Forcibly updated configuration files"
