@@ -116,3 +116,6 @@ Here are some useful Makefile commands:
      ```
    - Fix: Set `throwing_new_allowed` to `true` in `toit/src/top.cc` (line 81).
 
+--------------------
+note: this repo was cloned from this template: https://github.com/toitware/demo-custom-envelope.git
+
