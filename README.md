@@ -1,6 +1,6 @@
 # Template Repository for Deploying Edge Impulse C++ Models on Toit-Enabled Devices
 
-This repository serves as a template for deploying Edge Impulse machine learning (ML) models on Toit-enabled devices. The approach involves compiling the model and peripheral code into a Toit firmware "envelope," enabling seamless addition or removal of multiple Toit containers without requiring firmware recompilation or reflashing. The following diagram illustrates the process:   
+This repository serves as a template for deploying Edge Impulse machine learning (ML) models on Toit-enabled devices. The approach involves compiling the model and peripheral code into a Toit firmware "envelope", enabling seamless addition or removal of multiple Toit containers without requiring firmware recompilation or reflashing. The following diagram illustrates the process:   
 <p align="center"><img src="diagram.png" alt="diagram" width="600"/></p>
 
 
@@ -11,8 +11,6 @@ For demonstration purposes, this guide uses the fall detection model available a
 
 ## Getting Started
 
-Follow these steps to prepare and deploy your Edge Impulse ML model:
-
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/yourusername/toit_edge_impulse.git
@@ -21,7 +19,7 @@ Follow these steps to prepare and deploy your Edge Impulse ML model:
 
 2. **Export Your Edge Impulse Model**:
    - Export your Edge Impulse model as a C++ library.
-   - Copy the exported model files into the appropriate directory in this repository.
+   - Paste the exported model files into `build-root/model_folder`
 
 3. **Customize Components**:
    - Add or remove top-level envelope C components in the `components` folder as needed.
