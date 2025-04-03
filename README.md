@@ -13,7 +13,7 @@ For demonstration purposes, this guide uses the fall detection model available a
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/yourusername/toit_edge_impulse.git
+   git clone https://github.com/abdalrahimnaser/toit_edge_impulse.git
    cd toit_edge_impulse
    ```
 
