@@ -86,7 +86,7 @@ Here are some useful Makefile commands:
 
 ## Common Issues and Fixes
 
-These will need to be applied, before `make` (twice) is run and a working firmware envelope is built.
+These will need to be applied, before `make` is run (twice) and a working firmware envelope is built.
 
 ### 1. **CMake Error: CONFIG_FREERTOS_HZ** (Automated)
 
