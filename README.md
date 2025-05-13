@@ -86,7 +86,7 @@ Here are some useful Makefile commands:
 
 ## Common Issues and Fixes
 
-These will need to be applied, before `make` is run and a working firmware envelope is built.
+These will need to be applied, before `make` (twice) is run and a working firmware envelope is built.
 
 ### 1. **CMake Error: CONFIG_FREERTOS_HZ** (Automated)
 
@@ -100,7 +100,7 @@ These will need to be applied, before `make` is run and a working firmware envel
      if(NOT CONFIG_FREERTOS_HZ EQUAL 100 AND NOT "$ENV{ARDUINO_SKIP_TICK_CHECK}")
      ```
 
-### 2. **Implicit Declaration Error**
+### 2. **Implicit Declaration Error** (Automated)
 
    - Error in `ble_hs_flow.c`:
      ```
@@ -113,7 +113,7 @@ These will need to be applied, before `make` is run and a working firmware envel
      }
      ```
 
-### 3. **Missing LSM6DS3.h**
+### 3. **Missing LSM6DS3.h** (Automated)
 
    - Error: 
      ```
@@ -124,14 +124,15 @@ These will need to be applied, before `make` is run and a working firmware envel
      - Extract
      - Copy to `build-root\managed_components\espressif__arduino-esp32\libraries\Seeed_Arduino_LSM6DS3-2.0.4`
      - Replace `build-root\managed_components\espressif__arduino-esp32\CMakeLists.txt` with https://gist.github.com/addshore/13f2cf33f7f1cfa1cf0564d2e61964b7
+      (or just modufy the existing CMakeLists.txt file as to include the new library )
 
-### 4. **I2C Pin Initialization for Lightbug (RH2 v2) Tracker**
+### 4. **I2C Pin Initialization for Lightbug (RH2 v2) Tracker** (Automated)
 
    This one will not stop the build, however will result in a non-functional I2C interface.
 
    - Fix: Change I2C pin initialization in `LSM6DS3.cpp` (line 88) to use pins `0,1`, so `Wire.begin(0,1);`
 
-### 5. **Toit Deployment Fatal Error**
+### 5. **Toit Deployment Fatal Error** (Automated)
 
    - Error during deployment via `jag run`:
      ```
