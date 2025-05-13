@@ -86,13 +86,16 @@ Here are some useful Makefile commands:
 
 ## Common Issues and Fixes
 
-### 1. **CMake Error: CONFIG_FREERTOS_HZ**
+These will need to be applied, before `make` is run and a working firmware envelope is built.
 
-   - Error: 
+### 1. **CMake Error: CONFIG_FREERTOS_HZ** (Automated)
+
+   This issue is now automatically handled by a script that runs with `make` commands.
+   - Original Error:
      ```
      esp32-arduino requires CONFIG_FREERTOS_HZ=1000 (currently 100)
      ```
-   - Fix: Modify line 369 in `build-root/managed_components/espressif__arduino-esp32/CMakeLists.txt` as follows:
+   - Original Fix: Modify line 369 in `build-root/managed_components/espressif__arduino-esp32/CMakeLists.txt` as follows:
      ```cpp
      if(NOT CONFIG_FREERTOS_HZ EQUAL 100 AND NOT "$ENV{ARDUINO_SKIP_TICK_CHECK}")
      ```
