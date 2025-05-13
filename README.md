@@ -5,7 +5,7 @@ This repository serves as a template for deploying Edge Impulse machine learning
 
 
 
-For demonstration purposes, this guide uses the fall detection model available at [Edge Impulse Studio](https://studio.edgeimpulse.com/public/23068/latest), running on Lightbug (X) tracker hardware.
+For demonstration purposes, this guide uses the fall detection model available at [Edge Impulse Studio](https://studio.edgeimpulse.com/public/23068/latest), running on Lightbug (RH2 v2) tracker hardware.
 
 ---
 
@@ -17,28 +17,37 @@ For demonstration purposes, this guide uses the fall detection model available a
    cd toit_edge_impulse
    ```
 
-2. **Export Your Edge Impulse Model**:
+## Customize the model (optional)
+
+1. **Export Your Edge Impulse Model**:
    - Export your Edge Impulse model as a C++ library.
    - Paste the exported model files into `build-root/model_folder`
 
-3. **Customize Components**:
+2. **Customize Components**:
    - Add or remove top-level envelope C components in the `components` folder as needed.
    - To include external ESP-IDF dependencies, modify the `idf_component.yml` file in the same folder.
 
-4. **Configure Build Settings**:
+3. **Configure Build Settings**:
    - Run `make menuconfig` to configure the build settings.
 
-5. **Build the Firmware Envelope**:
+Then continue with "Building the Firmware" step.
+
+## Building the Firmware
+
+1. **Build the Firmware Envelope**:
    - Execute `make` to compile the firmware envelope.
    - The compiled envelope will be located at `build/esp32c6/firmware.envelope`.
    - A precompiled version is already available in this location for convenience if no hardware or model changes are required.
 
-6. **Flash the Firmware**:
+2. **Flash the Firmware**:
+
+   Currently you'll need https://github.com/toitlang/jaguar/releases/tag/v1.47.0 with Toit SDK v2.0.0-alpha.174
+
    ```bash
    jag flash build/esp32c6/firmware.envelope --chip esp32c6
    ```
 
-7. **Monitor Deployment**:
+3. **Monitor Deployment**:
    - Run `jag monitor` to allow deploying containers.
    - Note the IP address displayed by the ESP controller, as it will be required for deploying Toit apps/containers.
 
@@ -77,22 +86,27 @@ Here are some useful Makefile commands:
 
 ## Common Issues and Fixes
 
-### 1. **CMake Error: CONFIG_FREERTOS_HZ**
-   - Error: 
+These will need to be applied, before `make` is run and a working firmware envelope is built.
+
+### 1. **CMake Error: CONFIG_FREERTOS_HZ** (Automated)
+
+   This issue is now automatically handled by a script that runs with `make` commands.
+   - Original Error:
      ```
      esp32-arduino requires CONFIG_FREERTOS_HZ=1000 (currently 100)
      ```
-   - Fix: Modify line 369 in `CMakeLists.txt` as follows:
+   - Original Fix: Modify line 369 in `build-root/managed_components/espressif__arduino-esp32/CMakeLists.txt` as follows:
      ```cpp
      if(NOT CONFIG_FREERTOS_HZ EQUAL 100 AND NOT "$ENV{ARDUINO_SKIP_TICK_CHECK}")
      ```
 
 ### 2. **Implicit Declaration Error**
+
    - Error in `ble_hs_flow.c`:
      ```
-     implicit declaration of function 'ble_hci_trans_set_acl_free_cb'
+     implicit declaration of function 'ble_hci_trans_set_acl_free_cb'; did you mean 'ble_hci_trans_hs_acl_tx'? [-Werror=implicit-function-declaration]
      ```
-   - Fix: Add this temporary workaround below includes:
+   - Fix: Add this temporary workaround so the top of the `ble_hs_flow.c:` file:
      ```cpp
      int ble_hci_trans_set_acl_free_cb(os_mempool_put_fn *cb, void *arg) {
          return BLE_ERR_UNSUPPORTED; // Temporary workaround
@@ -100,16 +114,25 @@ Here are some useful Makefile commands:
      ```
 
 ### 3. **Missing LSM6DS3.h**
+
    - Error: 
      ```
      fatal error: LSM6DS3.h: No such file or directory
      ```
    - Fix: Install the required library and adjust paths accordingly (see [tutorial](https://www.youtube.com/watch?v=7wOpKfeLd7w)).
+     - Download https://github.com/Seeed-Studio/Seeed_Arduino_LSM6DS3/releases/tag/v2.0.4
+     - Extract
+     - Copy to `build-root\managed_components\espressif__arduino-esp32\libraries\Seeed_Arduino_LSM6DS3-2.0.4`
+     - Replace `build-root\managed_components\espressif__arduino-esp32\CMakeLists.txt` with https://gist.github.com/addshore/13f2cf33f7f1cfa1cf0564d2e61964b7
 
-### 4. **I2C Pin Initialization for Lightbug X Tracker**
-   - Fix: Change I2C pin initialization in `LSM6DS3.cpp` (line 88) to use pins `0,1`.
+### 4. **I2C Pin Initialization for Lightbug (RH2 v2) Tracker**
+
+   This one will not stop the build, however will result in a non-functional I2C interface.
+
+   - Fix: Change I2C pin initialization in `LSM6DS3.cpp` (line 88) to use pins `0,1`, so `Wire.begin(0,1);`
 
 ### 5. **Toit Deployment Fatal Error**
+
    - Error during deployment via `jag run`:
      ```
      fatal: Throwing new[] not allowed: 24

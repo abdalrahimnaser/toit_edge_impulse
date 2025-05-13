@@ -23,7 +23,7 @@ TOIT_ROOT := $(SOURCE_DIR)/toit
 IDF_PATH := $(TOIT_ROOT)/third_party/esp-idf
 IDF_PY := $(IDF_PATH)/tools/idf.py
 
-all: esp32
+all: run-modifications esp32
 
 define toit-make
 	@$(MAKE) -C "$(BUILD_ROOT)" \
@@ -43,15 +43,27 @@ initialize-submodules:
 		pushd toit && git submodule update --init --recursive && popd; \
 	fi
 
+.PHONY: run-modifications
+run-modifications:
+	@for script in $(SOURCE_DIR)/modifications/*.sh; do \
+		if [ -x "$$script" ]; then \
+			echo "Running $$script"; \
+			"$$script"; \
+		else \
+			echo "Running $$script"; \
+			bash "$$script"; \
+		fi \
+	done
+
 .PHONY: host
-host: initialize-submodules
+host: run-modifications initialize-submodules
 	@$(call toit-make,build-host)
 
 .PHONY: build-host
 build-host: host
 
 .PHONY: esp32
-esp32: initialize-submodules
+esp32: run-modifications initialize-submodules
 	@if [[ ! -f $(BUILD_ROOT)/sdkconfig.defaults ]]; then \
 	  echo "Run 'make init' first"; \
 		exit 1; \
@@ -59,15 +71,15 @@ esp32: initialize-submodules
 	@$(call toit-make,esp32)
 
 .PHONY: menuconfig
-menuconfig: initialize-submodules
+menuconfig: run-modifications initialize-submodules
 	@$(call toit-make,menuconfig)
 
 .PHONY: clean
-clean:
+clean: run-modifications
 	@$(call toit-make,clean)
 
 .PHONY: init
-init: $(BUILD_ROOT)/sdkconfig.defaults $(BUILD_ROOT)/partitions.csv
+init: run-modifications $(BUILD_ROOT)/sdkconfig.defaults $(BUILD_ROOT)/partitions.csv
 
 $(BUILD_ROOT)/sdkconfig.defaults: initialize-submodules
 	@cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/sdkconfig.defaults $@
@@ -76,6 +88,6 @@ $(BUILD_ROOT)/partitions.csv: initialize-submodules
 	@cp $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/partitions.csv $@
 
 .PHONY: diff
-diff:
+diff: run-modifications
 	@diff -U0 --color $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/sdkconfig.defaults $(BUILD_ROOT)/sdkconfig.defaults || true
 	@diff -U0 --color $(TOIT_ROOT)/toolchains/$(IDF_TARGET)/partitions.csv $(BUILD_ROOT)/partitions.csv || true
